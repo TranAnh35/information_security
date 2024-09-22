@@ -11,6 +11,8 @@
 #include <QRandomGenerator>
 #include <QRegularExpression>
 
+#include "Cipher.h"
+
 QT_BEGIN_NAMESPACE
 namespace Ui { class MainWindow; }
 QT_END_NAMESPACE
@@ -31,35 +33,21 @@ private slots:
     void on_encryptionTypeComboBox_currentIndexChanged();
     void checkTextEdits();
 
+    void set_Caesar_Form(bool status);
+    void set_Affine_Form(bool status);
+    void set_Vigenere_Form(bool status);
+    void set_Hill_Form(bool status);
+    void set_Permutation_Form(bool status);
+    void set_Playfair_Form(bool status);
+    void set_RailFence_Form(bool status);
+
 private:
     Ui::MainWindow *ui;
+    Cipher cipher;
+
     QString readFile(const QString &fileName);
     void writeFile(const QString &fileName, const QString &text);
-
-    // Caesar Cipher
-    QString caesarEncrypt(const QString &input, int key);
-    QString caesarDecrypt(const QString &input, int key);
-
-    // Substitution Cipher
-    QString generateSubstitutionKey();
-    QString readSubstitutionKey(const QString &fileName);
-    void saveSubstitutionKey(const QString &key, const QString &fileName);
-    QString SubstitutionEncryption(const QString &input, const QString &key);
-    QString SubstitutionDecryption(const QString &input, const QString &key);
-
-    // Affine Cipher
-    QString affineEncrypt(const QString &text, int a, int b);
-    QString affineDecrypt(const QString &text, int a, int b);
-
-    // Vigenère Cipher
-    QString vigenereEncrypt(const QString &text, const QString &key);
-    QString vigenereDecrypt(const QString &text, const QString &key);
-
-    // Hill Cipher
-    QVector<QVector<int>> parseHillKey(const QString &key);
-    QString hillEncrypt(const QString &text, const QVector<QVector<int>> &keyMatrix);
-    QString hillDecrypt(const QString &text, const QVector<QVector<int>> &keyMatrix);
-
+    
     QString getExecutablePath();
     QString currentFilePath;
 };
