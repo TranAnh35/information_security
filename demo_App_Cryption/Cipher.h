@@ -3,14 +3,17 @@
 
 #include <QDir>
 #include <QFile>
-#include <algorithm>
 #include <QFileDialog>
+#include <QByteArray>
 #include <QTextStream>
 #include <QMessageBox>
 #include <qnamespace.h>
 #include <QRandomGenerator>
 #include <QCoreApplication>
 #include <QRegularExpression>
+#include <QCryptographicHash>
+
+#include <gcrypt.h>
 
 class Cipher{
 public:
@@ -51,6 +54,13 @@ public:
     QString railFenceEncrypt(const QString &text, int key);
     QString railFenceDecrypt(const QString &cipherText, int key);
 
+    // DES Cipher
+    QString desEncrypt(const QString &plainText, const QString &keyStr);
+    QString desDecrypt(const QString &encryptedText, const QString &keyStr);
+
+    // AES Cipher
+    QString aesEncrypt(const QString &plaintext, const QString &key);
+    QString aesDecrypt(const QString &ciphertext, const QString &key);
 };
 
 #endif // CIPHER_H

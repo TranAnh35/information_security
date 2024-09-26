@@ -3,7 +3,6 @@
 
 #include <QFile>
 #include <QString>
-#include <algorithm>
 #include <QMainWindow>
 #include <QTextStream>
 #include <QMessageBox>
@@ -33,13 +32,11 @@ private slots:
     void on_encryptionTypeComboBox_currentIndexChanged();
     void checkTextEdits();
 
-    void set_Caesar_Form(bool status);
+    void set_SpinBox(bool status);
+    void set_LineEdit(bool status);
+
     void set_Affine_Form(bool status);
-    void set_Vigenere_Form(bool status);
     void set_Hill_Form(bool status);
-    void set_Permutation_Form(bool status);
-    void set_Playfair_Form(bool status);
-    void set_RailFence_Form(bool status);
 
 private:
     Ui::MainWindow *ui;
@@ -47,6 +44,9 @@ private:
 
     QString readFile(const QString &fileName);
     void writeFile(const QString &fileName, const QString &text);
+
+    QString encryptText(const QString& text, const QString& type);
+    QString decryptText(const QString& text, const QString& type);
     
     QString getExecutablePath();
     QString currentFilePath;

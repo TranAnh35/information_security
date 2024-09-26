@@ -27,7 +27,7 @@
      </rect>
     </property>
    </widget>
-   <widget class="QSpinBox" name="caesar_keySpinBox">
+   <widget class="QSpinBox" name="keySpinBox">
     <property name="enabled">
      <bool>true</bool>
     </property>
@@ -56,7 +56,7 @@
      <enum>Qt::TextFormat::AutoText</enum>
     </property>
    </widget>
-   <widget class="QLabel" name="label_caesar">
+   <widget class="QLabel" name="label_key">
     <property name="enabled">
      <bool>true</bool>
     </property>
@@ -267,33 +267,10 @@
      </rect>
     </property>
    </widget>
-   <widget class="QLineEdit" name="vigen_keyLineEdit">
-    <property name="geometry">
-     <rect>
-      <x>380</x>
-      <y>240</y>
-      <width>271</width>
-      <height>31</height>
-     </rect>
-    </property>
-   </widget>
-   <widget class="QLabel" name="label_vigen">
-    <property name="geometry">
-     <rect>
-      <x>260</x>
-      <y>240</y>
-      <width>91</width>
-      <height>31</height>
-     </rect>
-    </property>
-    <property name="text">
-     <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-size:12pt;&quot;&gt;Nhập khóa:&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-    </property>
-   </widget>
    <widget class="QLabel" name="label_hill">
     <property name="geometry">
      <rect>
-      <x>220</x>
+      <x>210</x>
       <y>230</y>
       <width>151</width>
       <height>51</height>
@@ -313,73 +290,14 @@
      </rect>
     </property>
    </widget>
-   <widget class="QLineEdit" name="permutation_KeyLineEdit">
+   <widget class="QLineEdit" name="keyLineEdit">
     <property name="geometry">
      <rect>
       <x>380</x>
       <y>240</y>
-      <width>271</width>
+      <width>211</width>
       <height>31</height>
      </rect>
-    </property>
-   </widget>
-   <widget class="QLabel" name="label_permutation">
-    <property name="geometry">
-     <rect>
-      <x>260</x>
-      <y>230</y>
-      <width>91</width>
-      <height>41</height>
-     </rect>
-    </property>
-    <property name="text">
-     <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-size:12pt;&quot;&gt;Nhập khóa:&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-    </property>
-   </widget>
-   <widget class="QLabel" name="label_playfair">
-    <property name="geometry">
-     <rect>
-      <x>260</x>
-      <y>240</y>
-      <width>91</width>
-      <height>31</height>
-     </rect>
-    </property>
-    <property name="text">
-     <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-size:12pt;&quot;&gt;Nhập khóa:&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-    </property>
-   </widget>
-   <widget class="QLineEdit" name="playfair_KeyLineEdit">
-    <property name="geometry">
-     <rect>
-      <x>380</x>
-      <y>240</y>
-      <width>271</width>
-      <height>31</height>
-     </rect>
-    </property>
-   </widget>
-   <widget class="QSpinBox" name="railFence_SpinBox">
-    <property name="geometry">
-     <rect>
-      <x>380</x>
-      <y>240</y>
-      <width>121</width>
-      <height>31</height>
-     </rect>
-    </property>
-   </widget>
-   <widget class="QLabel" name="label_railFence">
-    <property name="geometry">
-     <rect>
-      <x>260</x>
-      <y>240</y>
-      <width>91</width>
-      <height>31</height>
-     </rect>
-    </property>
-    <property name="text">
-     <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-size:12pt;&quot;&gt;Nhập khóa:&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
     </property>
    </widget>
   </widget>

@@ -16,7 +16,8 @@ MainWindow::MainWindow(QWidget *parent)
     connect(ui->decryptedTextEdit, &QTextEdit::textChanged, this, &MainWindow::checkTextEdits);
 
     QVector<QString> items = {"Caesar Cipher", "Substitution Cipher", "Affine Cipher", "Vigenère Cipher",
-                              "Hill Cipher", "Permutation Cipher", "Playfair Cipher", "Rail Fence Cipher"};
+                              "Hill Cipher", "Permutation Cipher", "Playfair Cipher", "Rail Fence Cipher",
+                              "DES Cipher", "AES Cipher"};
 
     for(const auto& item : items){
         ui->encryptionTypeComboBox->addItem(item);
@@ -32,18 +33,26 @@ MainWindow::~MainWindow() {
 Các hàm xử lý sự kiện
 */
 
-// Hàm mã hóa
-void MainWindow::on_encryptButton_clicked() {
-    QString text = ui->inputTextEdit->toPlainText();
-    QString encryptedText;
-    if (ui->encryptionTypeComboBox->currentText() == "Caesar Cipher") {
-        int key = ui->caesar_keySpinBox->value();
-        if (text.isEmpty()) {
-            QMessageBox::warning(this, "Input Error", "Please provide both plaintext and a key.");
-            return;
-        }
-        encryptedText = cipher.caesarEncrypt(text, key);
-    } else if (ui->encryptionTypeComboBox->currentText() == "Substitution Cipher") {
+// Hàm tìm UCLN
+int gcd(int a, int b) {
+    if (b == 0) {
+        return a;
+    }
+    return gcd(b, a % b);
+}
+
+QString MainWindow::encryptText(const QString& text, const QString& type) {
+    if (text.isEmpty()) {
+        QMessageBox::warning(this, "Input Error", "Please provide plaintext.");
+        return QString();
+    }
+
+    if (type == "Caesar Cipher") {
+        int key = ui->keySpinBox->value();
+        return cipher.caesarEncrypt(text, key);
+    }
+
+    else if (type == "Substitution Cipher") {
         QString keyFilePath = getExecutablePath() + "/substitution_key.txt";
         QString substitutionKey;
         if (QFile::exists(keyFilePath)) {
@@ -52,119 +61,188 @@ void MainWindow::on_encryptButton_clicked() {
             substitutionKey = cipher.generateSubstitutionKey();
             cipher.saveSubstitutionKey(substitutionKey, keyFilePath);
         }
-        encryptedText = cipher.SubstitutionEncryption(text, substitutionKey);
-    } else if (ui->encryptionTypeComboBox->currentText() == "Affine Cipher") {
-        int a = ui->affine_a_SpinBox->value();
-        int b = ui->affine_b_SpinBox->value();
-        if (text.isEmpty()) {
-            QMessageBox::warning(this, "Input Error", "Please provide both plaintext and a key.");
-            return;
-        }
-        encryptedText = cipher.affineEncrypt(text, a, b);
-    } else if (ui->encryptionTypeComboBox->currentText() == "Vigenère Cipher") {
-        QString key = ui->vigen_keyLineEdit->text();
-        if (text.isEmpty() || key.isEmpty()) {
-            QMessageBox::warning(this, "Input Error", "Please provide both plaintext and a key.");
-            return;
-        }
-        encryptedText = cipher.vigenereEncrypt(text, key);
-    } else if (ui->encryptionTypeComboBox->currentText() == "Hill Cipher") {
-        QString key = ui->hillMatrixTextEdit->toPlainText();
-        QVector<QVector<int>> keyMatrix = cipher.parseHillKey(key);
-        if (text.isEmpty() || keyMatrix.isEmpty()) {
-            QMessageBox::warning(this, "Input Error", "Please provide both plaintext and a key.");
-            return;
-        }
-        encryptedText = cipher.hillEncrypt(text, keyMatrix);
-    } else if (ui->encryptionTypeComboBox->currentText() == "Permutation Cipher") {
-        QString key = ui->permutation_KeyLineEdit->text();
-        if (text.isEmpty() || key.isEmpty()) {
-            QMessageBox::warning(this, "Input Error", "Please provide both plaintext and a key.");
-            return;
-        }
-        encryptedText = cipher.encryptPermutationCipher(text, key);
-    } else if (ui->encryptionTypeComboBox->currentText() == "Playfair Cipher"){
-        QString keyText = ui->playfair_KeyLineEdit->text();
-        QVector<QVector<QChar>> key = cipher.generatePlayfairTable(keyText);
-        if (text.isEmpty() || key.isEmpty()) {
-            QMessageBox::warning(this, "Input Error", "Please provide both plaintext and a key.");
-            return;
-        }
-        encryptedText = cipher.playfairEncrypt(text, key);
-    } else if (ui->encryptionTypeComboBox->currentText() == "Rail Fence Cipher") {
-        int key = ui->railFence_SpinBox->value();
-        if (text.isEmpty()) {
-            QMessageBox::warning(this, "Input Error", "Please provide both plaintext and a key.");
-            return;
-        }
-        encryptedText = cipher.railFenceEncrypt(text, key);
+        return cipher.SubstitutionEncryption(text, substitutionKey);
     }
 
+    else if (type == "Affine Cipher") {
+        int a = ui->affine_a_SpinBox->value();
+        if (gcd(a, 26) != 1) {
+            QMessageBox::warning(this, "Input Error", "Key 'a' must be coprime with 26.");
+            return QString();
+        }
+        int b = ui->affine_b_SpinBox->value();
+        return cipher.affineEncrypt(text, a, b);
+    }
+
+    else if (type == "Vigenère Cipher") {
+        QString key = ui->keyLineEdit->text();
+        if (key.isEmpty()) {
+            QMessageBox::warning(this, "Input Error", "Please provide cipherkey.");
+            return QString();
+        }
+        return cipher.vigenereEncrypt(text, key);
+    }
+
+    else if (type == "Hill Cipher") {
+        QString key = ui->hillMatrixTextEdit->toPlainText();     
+        if (key.isEmpty()) {
+            QMessageBox::warning(this, "Input Error", "Please provide cipherkey.");
+            return QString();
+        }
+        QVector<QVector<int>> keyMatrix = cipher.parseHillKey(key);
+        return cipher.hillEncrypt(text, keyMatrix);
+    }
+
+    else if (type == "Permutation Cipher") {
+        QString key = ui->keyLineEdit->text();
+        if (key.isEmpty()) {
+            QMessageBox::warning(this, "Input Error", "Please provide cipherkey.");
+            return QString();
+        }
+        return cipher.encryptPermutationCipher(text, key);
+    }
+
+    else if (type == "Playfair Cipher") {
+        QString keyText = ui->keyLineEdit->text();
+        if (keyText.isEmpty()) {
+            QMessageBox::warning(this, "Input Error", "Please provide cipherkey.");
+            return QString();
+        }
+        QVector<QVector<QChar>> key = cipher.generatePlayfairTable(keyText);
+        return cipher.playfairEncrypt(text, key);
+    }
+
+    else if (type == "Rail Fence Cipher") {
+        int key = ui->keySpinBox->value();
+        return cipher.railFenceEncrypt(text, key);
+    }
+
+    else if (type == "DES Cipher") {
+        QString key = ui->keyLineEdit->text();
+        if (key.isEmpty()) {
+            QMessageBox::warning(this, "Input Error", "Please provide cipherkey.");
+            return QString();
+        }
+        return cipher.desEncrypt(text, key);
+    }
+
+    else if (type == "AES Cipher") {
+        QString key = ui->keyLineEdit->text();
+        if (key.isEmpty()) {
+            QMessageBox::warning(this, "Input Error", "Please provide cipherkey.");
+            return QString();
+        }
+        return cipher.aesEncrypt(text, key);
+    }
+
+    return QString();
+}
+
+// Hàm giải mã chung
+QString MainWindow::decryptText(const QString& text, const QString& type) {
+    if (text.isEmpty()) {
+        QMessageBox::warning(this, "Input Error", "Please provide ciphertext.");
+        return QString();
+    }
+
+    if (type == "Caesar Cipher") {
+        int key = ui->keySpinBox->value();
+        return cipher.caesarDecrypt(text, key);
+    }
+
+    else if (type == "Substitution Cipher") {
+        QString keyFilePath = getExecutablePath() + "/substitution_key.txt";
+        QString substitutionKey = cipher.readSubstitutionKey(keyFilePath);
+        return cipher.SubstitutionDecryption(text, substitutionKey);
+    }
+
+    else if (type == "Affine Cipher") {
+        int a = ui->affine_a_SpinBox->value();
+        if (gcd(a, 26) != 1) {
+            QMessageBox::warning(this, "Input Error", "Key 'a' must be coprime with 26.");
+            return QString();
+        }
+        int b = ui->affine_b_SpinBox->value();
+        return cipher.affineDecrypt(text, a, b);
+    }
+
+    else if (type == "Vigenère Cipher") {
+        QString key = ui->keyLineEdit->text();
+        if (key.isEmpty()) {
+            QMessageBox::warning(this, "Input Error", "Please provide cipherkey.");
+            return QString();
+        }
+        return cipher.vigenereDecrypt(text, key);
+    }
+
+    else if (type == "Hill Cipher") {
+        QString key = ui->hillMatrixTextEdit->toPlainText();
+        if (key.isEmpty()) {
+            QMessageBox::warning(this, "Input Error", "Please provide cipherkey.");
+            return QString();
+        }
+        QVector<QVector<int>> keyMatrix = cipher.parseHillKey(key);
+        return cipher.hillDecrypt(text, keyMatrix);
+    }
+
+    else if (type == "Permutation Cipher") {
+        QString key = ui->keyLineEdit->text();
+        if (key.isEmpty()) {
+            QMessageBox::warning(this, "Input Error", "Please provide cipherkey.");
+            return QString();
+        }
+        return cipher.decryptPermutationCipher(text, key);
+    }
+
+    else if (type == "Playfair Cipher") {
+        QString keyText = ui->keyLineEdit->text();
+        if (keyText.isEmpty()) {
+            QMessageBox::warning(this, "Input Error", "Please provide cipherkey.");
+            return QString();
+        }
+        QVector<QVector<QChar>> key = cipher.generatePlayfairTable(keyText);
+        return cipher.playfairDecrypt(text, key);
+    }
+
+    else if (type == "Rail Fence Cipher") {
+        int key = ui->keySpinBox->value();
+        return cipher.railFenceDecrypt(text, key);
+    }
+
+    else if (type == "DES Cipher") {
+        QString key = ui->keyLineEdit->text();
+        if (key.isEmpty()) {
+            QMessageBox::warning(this, "Input Error", "Please provide cipherkey.");
+            return QString();
+        }
+        return cipher.desDecrypt(text, key);
+    }
+
+    else if (type == "AES Cipher") {
+        QString key = ui->keyLineEdit->text();
+        if (key.isEmpty()) {
+            QMessageBox::warning(this, "Input Error", "Please provide cipherkey.");
+            return QString();
+        }
+        return cipher.aesDecrypt(text, key);
+    }
+
+    return QString();
+}
+
+// Hàm mã hóa
+void MainWindow::on_encryptButton_clicked() {
+    QString text = ui->inputTextEdit->toPlainText();
+    QString type = ui->encryptionTypeComboBox->currentText();
+    QString encryptedText = encryptText(text, type);
     ui->encryptedTextEdit->setPlainText(encryptedText);
 }
 
 // Hàm giải mã
 void MainWindow::on_decryptButton_clicked() {
-    QString text = ui->inputTextEdit->toPlainText();
-    QString decryptedText;
-    if (ui->encryptionTypeComboBox->currentText() == "Caesar Cipher") {
-        int key = ui->caesar_keySpinBox->value();
-        if (text.isEmpty()) {
-            QMessageBox::warning(this, "Input Error", "Please provide both plaintext and a key.");
-            return;
-        }
-        decryptedText = cipher.caesarDecrypt(text, key);
-    } else if (ui->encryptionTypeComboBox->currentText() == "Substitution Cipher") {
-        QString keyFilePath = getExecutablePath() + "/substitution_key.txt";
-        QString substitutionKey = cipher.readSubstitutionKey(keyFilePath);
-        decryptedText = cipher.SubstitutionDecryption(text, substitutionKey);
-    } else if (ui->encryptionTypeComboBox->currentText() == "Affine Cipher") {
-        int a = ui->affine_a_SpinBox->value();
-        int b = ui->affine_b_SpinBox->value();
-        if (text.isEmpty()) {
-            QMessageBox::warning(this, "Input Error", "Please provide both plaintext and a key.");
-            return;
-        }
-        decryptedText = cipher.affineDecrypt(text, a, b);
-    } else if (ui->encryptionTypeComboBox->currentText() == "Vigenère Cipher") {
-        QString key = ui->vigen_keyLineEdit->text();
-        if (text.isEmpty() || key.isEmpty()) {
-            QMessageBox::warning(this, "Input Error", "Please provide both plaintext and a key.");
-            return;
-        }
-        decryptedText = cipher.vigenereDecrypt(text, key);
-    } else if (ui->encryptionTypeComboBox->currentText() == "Hill Cipher") {
-        QString key = ui->hillMatrixTextEdit->toPlainText();
-        QVector<QVector<int>> keyMatrix = cipher.parseHillKey(key);
-        if (text.isEmpty() || keyMatrix.isEmpty()) {
-            QMessageBox::warning(this, "Input Error", "Please provide both plaintext and a key.");
-            return;
-        }
-        decryptedText = cipher.hillDecrypt(text, keyMatrix);
-    } else if (ui->encryptionTypeComboBox->currentText() == "Permutation Cipher") {
-        QString key = ui->permutation_KeyLineEdit->text();
-        if (text.isEmpty() || key.isEmpty()) {
-            QMessageBox::warning(this, "Input Error", "Please provide both plaintext and a key.");
-            return;
-        }
-        decryptedText = cipher.decryptPermutationCipher(text, key);
-    } else if (ui->encryptionTypeComboBox->currentText() == "Playfair Cipher") {
-        QString keyText = ui->playfair_KeyLineEdit->text();
-        QVector<QVector<QChar>> key = cipher.generatePlayfairTable(keyText);
-        if (text.isEmpty() || key.isEmpty()) {
-            QMessageBox::warning(this, "Input Error", "Please provide both plaintext and a key.");
-            return;
-        }
-        decryptedText = cipher.playfairDecrypt(text, key);
-    } else if (ui->encryptionTypeComboBox->currentText() == "Rail Fence Cipher") {
-        int key = ui->railFence_SpinBox->value();
-        if(text.isEmpty()){
-            QMessageBox::warning(this, "Input Error", "Please provide both plaintext and a key.");
-            return;
-        }
-        decryptedText = cipher.railFenceDecrypt(text, key);
-    }
-
+    QString text = ui->encryptedTextEdit->toPlainText();
+    QString type = ui->encryptionTypeComboBox->currentText();
+    QString decryptedText = decryptText(text, type);
     ui->decryptedTextEdit->setPlainText(decryptedText);
 }
 
@@ -218,9 +296,12 @@ Các hàm xử lý sự kiện khi thay đổi loại mã hóa
 **********************************************
 */
 
-void MainWindow::set_Caesar_Form(bool status){
-    ui->label_caesar->setVisible(status);
-    ui->caesar_keySpinBox->setVisible(status);
+void MainWindow::set_SpinBox(bool status){
+    ui->keySpinBox->setVisible(status);
+}
+
+void MainWindow::set_LineEdit(bool status){
+    ui->keyLineEdit->setVisible(status);
 }
 
 void MainWindow::set_Affine_Form(bool status){
@@ -230,94 +311,72 @@ void MainWindow::set_Affine_Form(bool status){
     ui->affine_b_SpinBox->setVisible(status);
 }
 
-void MainWindow::set_Vigenere_Form(bool status){
-    ui->label_vigen->setVisible(status);
-    ui->vigen_keyLineEdit->setVisible(status);
-}
-
 void MainWindow::set_Hill_Form(bool status){
     ui->label_hill->setVisible(status);
     ui->hillMatrixTextEdit->setVisible(status);
 }
 
-void MainWindow::set_Permutation_Form(bool status){
-    ui->label_permutation->setVisible(status);
-    ui->permutation_KeyLineEdit->setVisible(status);
-}
-
-void MainWindow::set_Playfair_Form(bool status){
-    ui->label_playfair->setVisible(status);
-    ui->playfair_KeyLineEdit->setVisible(status);
-}
-
-void MainWindow::set_RailFence_Form(bool status){
-    ui->label_railFence->setVisible(status);
-    ui->railFence_SpinBox->setVisible(status);
-}
-
 void MainWindow::on_encryptionTypeComboBox_currentIndexChanged() {
     if (ui->encryptionTypeComboBox->currentText() == "Caesar Cipher") {
-        set_Caesar_Form(true);
+        ui->label_key->setVisible(true);
+        set_SpinBox(true);
+        set_LineEdit(false);
         set_Affine_Form(false);
-        set_Vigenere_Form(false);
         set_Hill_Form(false);
-        set_Permutation_Form(false);
-        set_Playfair_Form(false);
-        set_RailFence_Form(false);
     } else if (ui->encryptionTypeComboBox->currentText() == "Substitution Cipher") {
-        set_Caesar_Form(false);
+        ui->label_key->setVisible(false);
+        set_SpinBox(false);
+        set_LineEdit(false);
         set_Affine_Form(false);
-        set_Vigenere_Form(false);
         set_Hill_Form(false);
-        set_Permutation_Form(false);
-        set_Playfair_Form(false);
-        set_RailFence_Form(false);
     } else if (ui->encryptionTypeComboBox->currentText() == "Affine Cipher") {
-        set_Caesar_Form(false);
+        ui->label_key->setVisible(false);
+        set_SpinBox(false);
+        set_LineEdit(false);
         set_Affine_Form(true);
-        set_Vigenere_Form(false);
         set_Hill_Form(false);
-        set_Permutation_Form(false);
-        set_Playfair_Form(false);
-        set_RailFence_Form(false);
     } else if (ui->encryptionTypeComboBox->currentText() == "Vigenère Cipher") {
-        set_Caesar_Form(false);
+        ui->label_key->setVisible(true);
+        set_SpinBox(false);
+        set_LineEdit(true);
         set_Affine_Form(false);
-        set_Vigenere_Form(true);
         set_Hill_Form(false);
-        set_Permutation_Form(false);
-        set_Playfair_Form(false);
     } else if (ui->encryptionTypeComboBox->currentText() == "Hill Cipher") {
-        set_Caesar_Form(false);
+        ui->label_key->setVisible(false);
+        set_SpinBox(false);
+        set_LineEdit(false);
         set_Affine_Form(false);
-        set_Vigenere_Form(false);
         set_Hill_Form(true);
-        set_Permutation_Form(false);
-        set_Playfair_Form(false);
-        set_RailFence_Form(false);
     } else if (ui->encryptionTypeComboBox->currentText() == "Permutation Cipher"){
-        set_Caesar_Form(false);
+        ui->label_key->setVisible(true);
+        set_SpinBox(false);
+        set_LineEdit(true);
         set_Affine_Form(false);
-        set_Vigenere_Form(false);
         set_Hill_Form(false);
-        set_Permutation_Form(true);
-        set_Playfair_Form(false);
     } else if (ui->encryptionTypeComboBox->currentText() == "Playfair Cipher"){
-        set_Caesar_Form(false);
+        ui->label_key->setVisible(true);
+        set_SpinBox(false);
+        set_LineEdit(true);
         set_Affine_Form(false);
-        set_Vigenere_Form(false);
         set_Hill_Form(false);
-        set_Permutation_Form(false);
-        set_Playfair_Form(true);
-        set_RailFence_Form(false);
     } else if (ui->encryptionTypeComboBox->currentText() == "Rail Fence Cipher"){
-        set_Caesar_Form(false);
+        ui->label_key->setVisible(true);
+        set_SpinBox(true);
+        set_LineEdit(false);
         set_Affine_Form(false);
-        set_Vigenere_Form(false);
         set_Hill_Form(false);
-        set_Permutation_Form(false);
-        set_Playfair_Form(false);
-        set_RailFence_Form(true);
+    } else if (ui->encryptionTypeComboBox->currentText() == "DES Cipher"){
+        ui->label_key->setVisible(true);
+        set_SpinBox(false);
+        set_LineEdit(true);
+        set_Affine_Form(false);
+        set_Hill_Form(false);
+    } else if (ui->encryptionTypeComboBox->currentText() == "AES Cipher"){
+        ui->label_key->setVisible(true);
+        set_SpinBox(false);
+        set_LineEdit(true);
+        set_Affine_Form(false);
+        set_Hill_Form(false);
     }
 }
 
