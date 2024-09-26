@@ -41,6 +41,13 @@ int gcd(int a, int b) {
     return gcd(b, a % b);
 }
 
+void check_Exception_Key(const QString& key){
+    if (key.isEmpty()) {
+        QMessageBox::warning(this, "Input Error", "Please provide cipherkey.");
+        return QString();
+    }
+}
+
 QString MainWindow::encryptText(const QString& text, const QString& type) {
     if (text.isEmpty()) {
         QMessageBox::warning(this, "Input Error", "Please provide plaintext.");
@@ -76,38 +83,26 @@ QString MainWindow::encryptText(const QString& text, const QString& type) {
 
     else if (type == "Vigenère Cipher") {
         QString key = ui->keyLineEdit->text();
-        if (key.isEmpty()) {
-            QMessageBox::warning(this, "Input Error", "Please provide cipherkey.");
-            return QString();
-        }
+        check_Exception_Key(key);
         return cipher.vigenereEncrypt(text, key);
     }
 
     else if (type == "Hill Cipher") {
         QString key = ui->hillMatrixTextEdit->toPlainText();     
-        if (key.isEmpty()) {
-            QMessageBox::warning(this, "Input Error", "Please provide cipherkey.");
-            return QString();
-        }
+        check_Exception_Key(key);
         QVector<QVector<int>> keyMatrix = cipher.parseHillKey(key);
         return cipher.hillEncrypt(text, keyMatrix);
     }
 
     else if (type == "Permutation Cipher") {
         QString key = ui->keyLineEdit->text();
-        if (key.isEmpty()) {
-            QMessageBox::warning(this, "Input Error", "Please provide cipherkey.");
-            return QString();
-        }
+        check_Exception_Key(key);
         return cipher.encryptPermutationCipher(text, key);
     }
 
     else if (type == "Playfair Cipher") {
         QString keyText = ui->keyLineEdit->text();
-        if (keyText.isEmpty()) {
-            QMessageBox::warning(this, "Input Error", "Please provide cipherkey.");
-            return QString();
-        }
+        check_Exception_Key(keyText);
         QVector<QVector<QChar>> key = cipher.generatePlayfairTable(keyText);
         return cipher.playfairEncrypt(text, key);
     }
@@ -119,19 +114,13 @@ QString MainWindow::encryptText(const QString& text, const QString& type) {
 
     else if (type == "DES Cipher") {
         QString key = ui->keyLineEdit->text();
-        if (key.isEmpty()) {
-            QMessageBox::warning(this, "Input Error", "Please provide cipherkey.");
-            return QString();
-        }
+        check_Exception_Key(key);
         return cipher.desEncrypt(text, key);
     }
 
     else if (type == "AES Cipher") {
         QString key = ui->keyLineEdit->text();
-        if (key.isEmpty()) {
-            QMessageBox::warning(this, "Input Error", "Please provide cipherkey.");
-            return QString();
-        }
+        check_Exception_Key(key);
         return cipher.aesEncrypt(text, key);
     }
 
@@ -168,38 +157,26 @@ QString MainWindow::decryptText(const QString& text, const QString& type) {
 
     else if (type == "Vigenère Cipher") {
         QString key = ui->keyLineEdit->text();
-        if (key.isEmpty()) {
-            QMessageBox::warning(this, "Input Error", "Please provide cipherkey.");
-            return QString();
-        }
+        check_Exception_Key(key);
         return cipher.vigenereDecrypt(text, key);
     }
 
     else if (type == "Hill Cipher") {
         QString key = ui->hillMatrixTextEdit->toPlainText();
-        if (key.isEmpty()) {
-            QMessageBox::warning(this, "Input Error", "Please provide cipherkey.");
-            return QString();
-        }
+        check_Exception_Key(key);
         QVector<QVector<int>> keyMatrix = cipher.parseHillKey(key);
         return cipher.hillDecrypt(text, keyMatrix);
     }
 
     else if (type == "Permutation Cipher") {
         QString key = ui->keyLineEdit->text();
-        if (key.isEmpty()) {
-            QMessageBox::warning(this, "Input Error", "Please provide cipherkey.");
-            return QString();
-        }
+        check_Exception_Key(key);
         return cipher.decryptPermutationCipher(text, key);
     }
 
     else if (type == "Playfair Cipher") {
         QString keyText = ui->keyLineEdit->text();
-        if (keyText.isEmpty()) {
-            QMessageBox::warning(this, "Input Error", "Please provide cipherkey.");
-            return QString();
-        }
+        check_Exception_Key(key);
         QVector<QVector<QChar>> key = cipher.generatePlayfairTable(keyText);
         return cipher.playfairDecrypt(text, key);
     }
@@ -211,19 +188,13 @@ QString MainWindow::decryptText(const QString& text, const QString& type) {
 
     else if (type == "DES Cipher") {
         QString key = ui->keyLineEdit->text();
-        if (key.isEmpty()) {
-            QMessageBox::warning(this, "Input Error", "Please provide cipherkey.");
-            return QString();
-        }
+        check_Exception_Key(key);
         return cipher.desDecrypt(text, key);
     }
 
     else if (type == "AES Cipher") {
         QString key = ui->keyLineEdit->text();
-        if (key.isEmpty()) {
-            QMessageBox::warning(this, "Input Error", "Please provide cipherkey.");
-            return QString();
-        }
+        check_Exception_Key(key);
         return cipher.aesDecrypt(text, key);
     }
 
