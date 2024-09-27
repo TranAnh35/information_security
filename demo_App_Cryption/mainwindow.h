@@ -27,6 +27,7 @@ private slots:
     void on_encryptButton_clicked();
     void on_decryptButton_clicked();
     void on_browseButton_clicked();
+    void on_reScanButton_clicked();
     void on_saveEncryptedButton_clicked();
     void on_saveDecryptedButton_clicked();
     void on_encryptionTypeComboBox_currentIndexChanged();
@@ -44,6 +45,8 @@ private:
 
     QString readFile(const QString &fileName);
     void writeFile(const QString &fileName, const QString &text);
+
+    void check_Exception_Key(const QString& key);
 
     QString encryptText(const QString& text, const QString& type);
     QString decryptText(const QString& text, const QString& type);

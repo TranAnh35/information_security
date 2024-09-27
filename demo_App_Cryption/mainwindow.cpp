@@ -10,6 +10,7 @@ MainWindow::MainWindow(QWidget *parent)
     ui->decryptedTextEdit->setReadOnly(true);
     ui->saveEncryptedButton->setVisible(false);
     ui->saveDecryptedButton->setVisible(false);
+    ui->reScanButton->setVisible(false);
 
     connect(ui->inputTextEdit, &QTextEdit::textChanged, this, &MainWindow::checkTextEdits);
     connect(ui->encryptedTextEdit, &QTextEdit::textChanged, this, &MainWindow::checkTextEdits);
@@ -41,10 +42,9 @@ int gcd(int a, int b) {
     return gcd(b, a % b);
 }
 
-void check_Exception_Key(const QString& key){
+void MainWindow::check_Exception_Key(const QString& key){
     if (key.isEmpty()) {
         QMessageBox::warning(this, "Input Error", "Please provide cipherkey.");
-        return QString();
     }
 }
 
@@ -176,7 +176,7 @@ QString MainWindow::decryptText(const QString& text, const QString& type) {
 
     else if (type == "Playfair Cipher") {
         QString keyText = ui->keyLineEdit->text();
-        check_Exception_Key(key);
+        check_Exception_Key(keyText);
         QVector<QVector<QChar>> key = cipher.generatePlayfairTable(keyText);
         return cipher.playfairDecrypt(text, key);
     }
@@ -211,7 +211,8 @@ void MainWindow::on_encryptButton_clicked() {
 
 // Hàm giải mã
 void MainWindow::on_decryptButton_clicked() {
-    QString text = ui->encryptedTextEdit->toPlainText();
+    // QString text = ui->encryptedTextEdit->toPlainText();
+    QString text = ui->inputTextEdit->toPlainText();
     QString type = ui->encryptionTypeComboBox->currentText();
     QString decryptedText = decryptText(text, type);
     ui->decryptedTextEdit->setPlainText(decryptedText);
@@ -227,7 +228,14 @@ void MainWindow::on_browseButton_clicked() {
         currentFilePath = fileName;
         ui->saveEncryptedButton->setVisible(true);
         ui->saveDecryptedButton->setVisible(true);
+        ui->reScanButton->setVisible(true);
     }
+}
+
+// Hàm đọc lại file
+void MainWindow::on_reScanButton_clicked() {
+    QString text = readFile(currentFilePath);
+    ui->inputTextEdit->setPlainText(text);
 }
 
 // Hàm lưu kết quả mã hóa vào file
