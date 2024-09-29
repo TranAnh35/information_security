@@ -44,7 +44,8 @@ private slots:
     void set_Hill_Form(bool status);
 
     void on_browseFileTxtButton_clicked();
-    void on_file_browseButton_clicked();
+    void on_file_browseInputButton_clicked();
+    void on_file_browseOutputButton_clicked();
 
 private:
     Ui::MainWindow *ui;

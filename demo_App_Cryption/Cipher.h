@@ -17,16 +17,20 @@
 
 class Cipher{
 public:
+
+    /*
+    * **************************************************
+    * Mã hóa file text
+    * **************************************************
+    */
+
     // Caesar Cipher
     QString caesarEncrypt(const QString &input, int key);
     QString caesarDecrypt(const QString &input, int key);
 
     // Substitution Cipher
-    QString generateSubstitutionKey();
-    void saveSubstitutionKey(const QString &key, const QString &fileName);
-    QString readSubstitutionKey(const QString &fileName);
-    QString SubstitutionEncryption(const QString &input, const QString &key);
-    QString SubstitutionDecryption(const QString &input, const QString &key);
+    QString SubstitutionEncryption(const QString &input);
+    QString SubstitutionDecryption(const QString &input);
 
     // Affine Cipher
     QString affineEncrypt(const QString &text, int a, int b);
@@ -62,18 +66,33 @@ public:
     QString aesEncrypt(const QString &plaintext, const QString &key);
     QString aesDecrypt(const QString &ciphertext, const QString &key);
 
-    // Hàm mã hóa nhiều loại file
+    /*
+    * **************************************************
+    * Mã hóa nhiều file
+    * **************************************************
+    */
+
+    // Hàm mã 
     static QByteArray encryptAES(const QByteArray &data);
-    static QByteArray decryptAES(const QByteArray &data);
     static QByteArray encryptDES(const QByteArray &data);
+
+    // Giải mã
+    static QByteArray decryptAES(const QByteArray &data);
     static QByteArray decryptDES(const QByteArray &data);
 
 private:
+    // Substitution Cipher
+    static QString generateSubstitutionKey();
+    static QString checkSubstitutionKey();
+
+    // DES Cipher
     static QByteArray checkDESKey();
+    static QByteArray generateDESKey();
+
+    // AES Cipher
     static QByteArray checkAESKey();
     static QByteArray generateAESKey();
-    static QByteArray generateDESKey();
-    static bool saveKeyToFile(const QString &filePath, const QByteArray &key);
+    static void saveKeyToFile(const QString &filePath, const QByteArray &key);
     static QByteArray loadKeyFromFile(const QString &filePath);
 };
 

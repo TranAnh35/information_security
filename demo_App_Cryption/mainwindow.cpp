@@ -7,8 +7,10 @@ MainWindow::MainWindow(QWidget *parent)
 {
     ui->setupUi(this);
 
+    // Cho phép kéo và thả
     setAcceptDrops(true);
 
+    // Kết nối các tín hiệu nút với các khe tương ứng (chức năng)
     connect(ui->importFileButton, &QPushButton::clicked, this, &MainWindow::showImportOptions);
     connect(ui->enterTextButton, &QPushButton::clicked, this, &MainWindow::showTextEntry);
     connect(ui->importEncryptButton, &QPushButton::clicked, this, &MainWindow::showFileOptions);
@@ -20,24 +22,31 @@ MainWindow::MainWindow(QWidget *parent)
     connect(ui->import_backHomeButton, &QPushButton::clicked, this, &MainWindow::backToHome);
     connect(ui->file_backImportButton, &QPushButton::clicked, this, &MainWindow::backToImport);
 
+    // Tạo danh sách các loại mã hóa
     QVector<QString> items = {"Caesar Cipher", "Substitution Cipher", "Affine Cipher", "Vigenère Cipher",
                               "Hill Cipher", "Permutation Cipher", "Playfair Cipher", "Rail Fence Cipher",
                               "DES Cipher", "AES Cipher"};
 
+    // Thêm các mục vào hộp kết hợp cho các loại mã hóa
     for(const auto& item : items){
         ui->encryptionTypeComboBox->addItem(item);
     }
 
+    // Đặt chỉnh sửa văn bản được mã hóa và giải mã thành chỉ đọc
     ui->encryptedTextEdit->setReadOnly(true);
     ui->decryptedTextEdit->setReadOnly(true);
+
+    // Ẩn các nút cụ thể ban đầu
     ui->saveEncryptedButton->setVisible(false);
     ui->saveDecryptedButton->setVisible(false);
     ui->reScanButton->setVisible(false);
 
+    // Kết nối tín hiệu để theo dõi các thay đổi văn bản trong các bản chỉnh sửa văn bản
     connect(ui->inputTextEdit, &QTextEdit::textChanged, this, &MainWindow::checkTextEdits);
     connect(ui->encryptedTextEdit, &QTextEdit::textChanged, this, &MainWindow::checkTextEdits);
     connect(ui->decryptedTextEdit, &QTextEdit::textChanged, this, &MainWindow::checkTextEdits);
 
+    // Thêm thuật toán vào hộp kết hợp cho thuật toán mã hóa/giải mã
     ui->algorithmComboBox->addItem("DES Cipher");
     ui->algorithmComboBox->addItem("AES Cipher");
 }
@@ -46,21 +55,49 @@ MainWindow::~MainWindow() {
     delete ui;
 }
 
+/*
+* ********************************************
+* Các hàm chuyển đổi Widget
+* ********************************************
+*/
+
+// Chuyển đổi sang Page Import
 void MainWindow::showImportOptions()
 {
     ui->stackedWidget->setCurrentWidget(ui->pageImport);
 }
 
+// Chuyển đổi sang Page Text
 void MainWindow::showTextEntry()
 {
     ui->stackedWidget->setCurrentWidget(ui->pageText);
 }
 
+// Chuyển đổi sang Page File
 void MainWindow::showFileOptions()
 {
     ui->stackedWidget->setCurrentWidget(ui->pageFile);
 }
 
+// Chuyển đổi về Page Home
+void MainWindow::backToHome()
+{
+    ui->stackedWidget->setCurrentWidget(ui->pageHome);
+}
+
+// Chuyển đổi về Page Import
+void MainWindow::backToImport()
+{
+    ui->stackedWidget->setCurrentWidget(ui->pageImport);
+}
+
+/*
+* ********************************************
+* Các hàm xử lý đến file
+* ********************************************
+*/
+
+// Hàm duyệt file - dùng để chọn file để mã hóa và giải mã
 void MainWindow::browseFile()
 {
     QString filePath = QFileDialog::getOpenFileName(this, tr("Open File"), "", tr("All Files (*)"));
@@ -70,7 +107,15 @@ void MainWindow::browseFile()
     }
 }
 
-void MainWindow::on_file_browseButton_clicked() {
+void MainWindow::on_file_browseInputButton_clicked(){
+    QString filePath = QFileDialog::getOpenFileName(this, tr("Save File"), "", tr("All Files (*)"));
+    if (!filePath.isEmpty()) {
+        ui->inputPathLineEdit->setText(filePath);
+    }
+}
+
+// Hàm duyệt file - dùng để chọn nơi lưu file sau khi mã hóa hoặc giải mã.
+void MainWindow::on_file_browseOutputButton_clicked() {
     QString filePath = QFileDialog::getSaveFileName(this, tr("Save File"), "", tr("All Files (*)"));
     if (!filePath.isEmpty()) {
         QString mode = ui->startButton->property("mode").toString();
@@ -88,6 +133,7 @@ void MainWindow::on_file_browseButton_clicked() {
     }
 }
 
+// Hàm duyệt file cần mã hóa
 void MainWindow::importEncryptFile()
 {
     browseFile();
@@ -96,6 +142,7 @@ void MainWindow::importEncryptFile()
     ui->startButton->setProperty("mode", "encrypt");
 }
 
+// Hàm duyệt các file đã mã hóa
 void MainWindow::importDecryptFile()
 {
     QString filePath = QFileDialog::getOpenFileName(this, tr("Open File"), "", tr("Data Files (*.dat)"));
@@ -108,16 +155,7 @@ void MainWindow::importDecryptFile()
     }
 }
 
-void MainWindow::backToHome()
-{
-    ui->stackedWidget->setCurrentWidget(ui->pageHome);
-}
-
-void MainWindow::backToImport()
-{
-    ui->stackedWidget->setCurrentWidget(ui->pageImport);
-}
-
+// Hàm xử lý mã hóa và giải mã
 void MainWindow::startProcess()
 {
     QString inputFilePath = ui->inputPathLineEdit->text();
@@ -165,6 +203,7 @@ void MainWindow::startProcess()
     }
 }
 
+// Hàm xử lý kéo file
 void MainWindow::dragEnterEvent(QDragEnterEvent *event)
 {
     if (event->mimeData()->hasUrls()) {
@@ -172,6 +211,7 @@ void MainWindow::dragEnterEvent(QDragEnterEvent *event)
     }
 }
 
+// Hàm xử lý thả file
 void MainWindow::dropEvent(QDropEvent *event)
 {
     foreach (const QUrl &url, event->mimeData()->urls()) {
@@ -186,11 +226,84 @@ void MainWindow::dropEvent(QDropEvent *event)
     }
 }
 
+// Hàm đọc file
+QString MainWindow::readFile(const QString &fileName) {
+    QFile file(fileName);
+    if (!file.open(QIODevice::ReadOnly | QIODevice::Text)) {
+        QMessageBox::warning(this, "Error", "Cannot open file: " + fileName);
+        return "";
+    }
+    QTextStream in(&file);
+    return in.readAll();
+}
+
+// Hàm ghi file
+void MainWindow::writeFile(const QString &fileName, const QString &text) {
+    QFile file(fileName);
+    if (!file.open(QIODevice::WriteOnly | QIODevice::Text)) {
+        QMessageBox::warning(this, "Error", "Cannot write to file: " + fileName);
+        return;
+    }
+    QTextStream out(&file);
+    out << text;
+}
+
+// Hàm xử lý sự kiện khi nhấn nút - Dùng trong Page Text
+void MainWindow::on_browseFileTxtButton_clicked() {
+    QString fileName = QFileDialog::getOpenFileName(this, "Open Text File", "", "Text Files (*.txt)");
+    if (!fileName.isEmpty()) {
+        QString text = readFile(fileName);
+        ui->inputTextEdit->setPlainText(text);
+        ui->filePathLabel->setText(fileName);
+        currentFilePath = fileName;
+        ui->saveEncryptedButton->setVisible(true);
+        ui->saveDecryptedButton->setVisible(true);
+        ui->reScanButton->setVisible(true);
+    }
+}
+
+// Hàm đọc lại file - Dùng trong Page Text - Dùng sau khi thực hiện lưu file
+void MainWindow::on_reScanButton_clicked() {
+    QString text = readFile(currentFilePath);
+    ui->inputTextEdit->setPlainText(text);
+}
+
+// Hàm lưu kết quả mã hóa vào file - Dùng trong Page Text
+void MainWindow::on_saveEncryptedButton_clicked() {
+    if (currentFilePath.isEmpty()) {
+        QMessageBox::warning(this, "Error", "No file selected!");
+        return;
+    }
+    QString encryptedText = ui->encryptedTextEdit->toPlainText();
+    writeFile(currentFilePath, encryptedText);
+    QMessageBox::information(this, "Success", "Encrypted text saved to file.");
+}
+
+// Hàm lưu kết quả giải mã vào file - Dùng trong Page Text
+void MainWindow::on_saveDecryptedButton_clicked() {
+    if (currentFilePath.isEmpty()) {
+        QMessageBox::warning(this, "Error", "No file selected!");
+        return;
+    }
+    QString decryptedText = ui->decryptedTextEdit->toPlainText();
+    writeFile(currentFilePath, decryptedText);
+    QMessageBox::information(this, "Success", "Decrypted text saved to file.");
+}
+
 /*
-Các hàm xử lý sự kiện
+* ********************************************
+* Các hàm xử lý sự kiện
+* ********************************************
 */
 
-// Hàm tìm UCLN
+// Hàm kiểm tra ngoại lệ của khóa
+void MainWindow::check_Exception_Key(const QString& key){
+    if (key.isEmpty()) {
+        QMessageBox::warning(this, "Input Error", "Please provide cipherkey.");
+    }
+}
+
+// Hàm tìm UCLN - Hỗ trợ Affine Cipher
 int gcd(int a, int b) {
     if (b == 0) {
         return a;
@@ -198,12 +311,7 @@ int gcd(int a, int b) {
     return gcd(b, a % b);
 }
 
-void MainWindow::check_Exception_Key(const QString& key){
-    if (key.isEmpty()) {
-        QMessageBox::warning(this, "Input Error", "Please provide cipherkey.");
-    }
-}
-
+// Hàm mã hóa text chung
 QString MainWindow::encryptText(const QString& text, const QString& type) {
     if (text.isEmpty()) {
         QMessageBox::warning(this, "Input Error", "Please provide plaintext.");
@@ -216,15 +324,7 @@ QString MainWindow::encryptText(const QString& text, const QString& type) {
     }
 
     else if (type == "Substitution Cipher") {
-        QString keyFilePath = getExecutablePath() + "/substitution_key.txt";
-        QString substitutionKey;
-        if (QFile::exists(keyFilePath)) {
-            substitutionKey = cipher.readSubstitutionKey(keyFilePath);
-        } else {
-            substitutionKey = cipher.generateSubstitutionKey();
-            cipher.saveSubstitutionKey(substitutionKey, keyFilePath);
-        }
-        return cipher.SubstitutionEncryption(text, substitutionKey);
+        return cipher.SubstitutionEncryption(text);
     }
 
     else if (type == "Affine Cipher") {
@@ -283,7 +383,7 @@ QString MainWindow::encryptText(const QString& text, const QString& type) {
     return QString();
 }
 
-// Hàm giải mã chung
+// Hàm giải mã text chung
 QString MainWindow::decryptText(const QString& text, const QString& type) {
     if (text.isEmpty()) {
         QMessageBox::warning(this, "Input Error", "Please provide ciphertext.");
@@ -296,9 +396,7 @@ QString MainWindow::decryptText(const QString& text, const QString& type) {
     }
 
     else if (type == "Substitution Cipher") {
-        QString keyFilePath = getExecutablePath() + "/substitution_key.txt";
-        QString substitutionKey = cipher.readSubstitutionKey(keyFilePath);
-        return cipher.SubstitutionDecryption(text, substitutionKey);
+        return cipher.SubstitutionDecryption(text);
     }
 
     else if (type == "Affine Cipher") {
@@ -357,7 +455,7 @@ QString MainWindow::decryptText(const QString& text, const QString& type) {
     return QString();
 }
 
-// Hàm mã hóa
+// Hàm xử lý sự kiện khi nhấn nút mã hóa
 void MainWindow::on_encryptButton_clicked() {
     QString text = ui->inputTextEdit->toPlainText();
     QString type = ui->encryptionTypeComboBox->currentText();
@@ -365,7 +463,7 @@ void MainWindow::on_encryptButton_clicked() {
     ui->encryptedTextEdit->setPlainText(encryptedText);
 }
 
-// Hàm giải mã
+// Hàm xử lý sự kiện khi nhấn nút giải mã
 void MainWindow::on_decryptButton_clicked() {
     // QString text = ui->encryptedTextEdit->toPlainText();
     QString text = ui->inputTextEdit->toPlainText();
@@ -374,49 +472,7 @@ void MainWindow::on_decryptButton_clicked() {
     ui->decryptedTextEdit->setPlainText(decryptedText);
 }
 
-// Hàm mở file
-void MainWindow::on_browseFileTxtButton_clicked() {
-    QString fileName = QFileDialog::getOpenFileName(this, "Open Text File", "", "Text Files (*.txt)");
-    if (!fileName.isEmpty()) {
-        QString text = readFile(fileName);
-        ui->inputTextEdit->setPlainText(text);
-        ui->filePathLabel->setText(fileName);
-        currentFilePath = fileName;
-        ui->saveEncryptedButton->setVisible(true);
-        ui->saveDecryptedButton->setVisible(true);
-        ui->reScanButton->setVisible(true);
-    }
-}
-
-// Hàm đọc lại file
-void MainWindow::on_reScanButton_clicked() {
-    QString text = readFile(currentFilePath);
-    ui->inputTextEdit->setPlainText(text);
-}
-
-// Hàm lưu kết quả mã hóa vào file
-void MainWindow::on_saveEncryptedButton_clicked() {
-    if (currentFilePath.isEmpty()) {
-        QMessageBox::warning(this, "Error", "No file selected!");
-        return;
-    }
-    QString encryptedText = ui->encryptedTextEdit->toPlainText();
-    writeFile(currentFilePath, encryptedText);
-    QMessageBox::information(this, "Success", "Encrypted text saved to file.");
-}
-
-// Hàm lưu kết quả giải mã vào file
-void MainWindow::on_saveDecryptedButton_clicked() {
-    if (currentFilePath.isEmpty()) {
-        QMessageBox::warning(this, "Error", "No file selected!");
-        return;
-    }
-    QString decryptedText = ui->decryptedTextEdit->toPlainText();
-    writeFile(currentFilePath, decryptedText);
-    QMessageBox::information(this, "Success", "Decrypted text saved to file.");
-}
-
-// Hàm kiểm tra các ô nhập liệu
+// Hàm kiểm tra các ô nhập liệu - Dùng trong Page Text
 void MainWindow::checkTextEdits() {
     bool enableSave = !ui->inputTextEdit->toPlainText().isEmpty() &&
                       (!ui->encryptedTextEdit->toPlainText().isEmpty() ||
@@ -426,19 +482,22 @@ void MainWindow::checkTextEdits() {
 }
 
 /*
-**********************************************
-Các hàm xử lý sự kiện khi thay đổi loại mã hóa
-**********************************************
+* ********************************************
+* Các hàm xử lý sự kiện khi thay đổi loại mã hóa
+* ********************************************
 */
 
+// Hàm phụ trách Spin Box
 void MainWindow::set_SpinBox(bool status){
     ui->keySpinBox->setVisible(status);
 }
 
+// Hàm phụ trách Line Edit
 void MainWindow::set_LineEdit(bool status){
     ui->keyLineEdit->setVisible(status);
 }
 
+// Hàm phụ trách các đối tượng liên quan đến Affine Cipher
 void MainWindow::set_Affine_Form(bool status){
     ui->label_affine_a->setVisible(status);
     ui->label_affine_b->setVisible(status);
@@ -446,11 +505,13 @@ void MainWindow::set_Affine_Form(bool status){
     ui->affine_b_SpinBox->setVisible(status);
 }
 
+// Hàm phụ trách các đối tượng liên quan đến Hill Cipher
 void MainWindow::set_Hill_Form(bool status){
     ui->label_hill->setVisible(status);
     ui->hillMatrixTextEdit->setVisible(status);
 }
 
+// Hàm set visible khi thay đổi phương thức mã hóa
 void MainWindow::on_encryptionTypeComboBox_currentIndexChanged() {
     if (ui->encryptionTypeComboBox->currentText() == "Caesar Cipher") {
         ui->label_key->setVisible(true);
@@ -513,31 +574,4 @@ void MainWindow::on_encryptionTypeComboBox_currentIndexChanged() {
         set_Affine_Form(false);
         set_Hill_Form(false);
     }
-}
-
-// Hàm đọc file
-QString MainWindow::readFile(const QString &fileName) {
-    QFile file(fileName);
-    if (!file.open(QIODevice::ReadOnly | QIODevice::Text)) {
-        QMessageBox::warning(this, "Error", "Cannot open file: " + fileName);
-        return "";
-    }
-    QTextStream in(&file);
-    return in.readAll();
-}
-
-// Hàm ghi file
-void MainWindow::writeFile(const QString &fileName, const QString &text) {
-    QFile file(fileName);
-    if (!file.open(QIODevice::WriteOnly | QIODevice::Text)) {
-        QMessageBox::warning(this, "Error", "Cannot write to file: " + fileName);
-        return;
-    }
-    QTextStream out(&file);
-    out << text;
-}
-
-// Hàm lấy đường dẫn thực thi
-QString MainWindow::getExecutablePath() {
-    return QCoreApplication::applicationDirPath();
 }

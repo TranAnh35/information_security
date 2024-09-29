@@ -2,16 +2,16 @@
 
 /*
 -------------------------------------------------------------------------------------------------------
-*******************************************************************************************************
+* *****************************************************************************************************
 * Mã hóa và giải mã Page Text
-*******************************************************************************************************
+* *****************************************************************************************************
 -------------------------------------------------------------------------------------------------------
 */
 
 /*
-******************************************
-Mã hóa và giải mã Caesar
-******************************************
+* ****************************************
+* Mã hóa và giải mã Caesar
+* ****************************************
 */
 
 // Hàm mã hóa Caesar
@@ -33,9 +33,9 @@ QString Cipher::caesarDecrypt(const QString &input, int key) {
 }
 
 /*
-******************************************
-Mã hóa và giải mã Substitution
-******************************************
+* ****************************************
+* Mã hóa và giải mã Substitution
+* ****************************************
 */
 
 // Hàm tạo khóa thay thế
@@ -48,34 +48,24 @@ QString Cipher::generateSubstitutionKey() {
     return key;
 }
 
-// Hàm lưu khóa thay thế
-void Cipher::saveSubstitutionKey(const QString &key, const QString &fileName) {
-    QFile file(fileName);
-    if (!file.open(QIODevice::WriteOnly | QIODevice::Text)) {
-        QMessageBox::warning(nullptr, "Error", "Cannot write to file: " + fileName);
-        // qDebug() << "Cannot write to file:" << fileName;
-        return;
+QString Cipher::checkSubstitutionKey(){
+    QString keyFilePath = QCoreApplication::applicationDirPath() + "/substitution_key.txt";
+    QString key;
+    if (QFile::exists(keyFilePath)) {
+        key = QString::fromUtf8(loadKeyFromFile(keyFilePath));
+    } else {
+        key = generateSubstitutionKey();
+        saveKeyToFile(keyFilePath, key.toUtf8());
     }
-    QTextStream out(&file);
-    out << key;
-}
-
-// Hàm đọc khóa thay thế
-QString Cipher::readSubstitutionKey(const QString &fileName) {
-    QFile file(fileName);
-    if (!file.open(QIODevice::ReadOnly | QIODevice::Text)) {
-        QMessageBox::warning(nullptr, "Error", "Cannot open file: " + fileName);
-        // qDebug() << "Cannot open to file:" << fileName;
-        return "";
-    }
-    QTextStream in(&file);
-    return in.readAll();
+    return key;
 }
 
 // Hàm mã hóa Substitution
-QString Cipher::SubstitutionEncryption(const QString &input, const QString &key) {
+QString Cipher::SubstitutionEncryption(const QString &input) {
     QString result;
     QString alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+    QString key = checkSubstitutionKey();
+
     for (QChar c : input) {
         if (c.isLetter()) {
             int index = alphabet.indexOf(c.toUpper());
@@ -94,9 +84,11 @@ QString Cipher::SubstitutionEncryption(const QString &input, const QString &key)
 }
 
 // Hàm giải mã Substitution
-QString Cipher::SubstitutionDecryption(const QString &input, const QString &key) {
+QString Cipher::SubstitutionDecryption(const QString &input) {
     QString result;
     QString alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+    QString key = checkSubstitutionKey();
+
     for (QChar c : input) {
         if (c.isLetter()) {
             int index = key.indexOf(c.toUpper());
@@ -115,9 +107,9 @@ QString Cipher::SubstitutionDecryption(const QString &input, const QString &key)
 }
 
 /*
-******************************************
-Mã hóa và giải mã Affine
-******************************************
+* ****************************************
+* Mã hóa và giải mã Affine
+* ****************************************
 */
 
 // Hàm mã hóa affine
@@ -160,9 +152,9 @@ QString Cipher::affineDecrypt(const QString &text, int a, int b) {
 }
 
 /*
-******************************************
-Mã hóa và giải mã Vigenère
-******************************************
+* ****************************************
+* Mã hóa và giải mã Vigenère
+* ****************************************
 */
 
 // Hàm mã hóa Vigenère
@@ -241,9 +233,9 @@ QString Cipher::vigenereDecrypt(const QString &text, const QString &key) {
 }
 
 /*
-******************************************
-Mã hóa và giải mã Hill
-******************************************
+* ****************************************
+* Mã hóa và giải mã Hill
+* ****************************************
 */
 
 // Hàm phân tích khóa Hill
@@ -436,9 +428,9 @@ QString Cipher::hillDecrypt(const QString &text, const QVector<QVector<int>> &ke
 }
 
 /*
-******************************************
-Mã hóa và giải mã Permutation
-******************************************
+* ****************************************
+* Mã hóa và giải mã Permutation
+* ****************************************
 */
 
 // Hàm mã hóa Permutation
@@ -505,12 +497,12 @@ QString Cipher::decryptPermutationCipher(const QString &text, const QString &key
 }
 
 /*
-******************************************
-Mã hóa và giải mã Playfair
-******************************************
+* ****************************************
+* Mã hóa và giải mã Playfair
+* ****************************************
 */
 
-// Hàm sinh bảng mã hóa
+// Hàm sinh ma trận khóa mã hóa
 QVector<QVector<QChar>> Cipher::generatePlayfairTable(const QString &key) {
     QString alphabet = "ABCDEFGHIKLMNOPQRSTUVWXYZ";
     QString processedKey = key.toUpper();
@@ -627,9 +619,9 @@ QString Cipher::playfairDecrypt(const QString &text, const QVector<QVector<QChar
 }
 
 /*
-******************************************
- * Mã hóa và giải mã Playfair
-******************************************
+* ****************************************
+* Mã hóa và giải mã Rail Fence
+* ****************************************
 */
 
 // Hàm mã hóa Rail Fence
@@ -702,11 +694,12 @@ QString Cipher::railFenceDecrypt(const QString &cipherText, int key) {
 }
 
 /*
-******************************************
- * Mã hóa và giải mã DES
-******************************************
+* ****************************************
+* Mã hóa và giải mã DES
+* ****************************************
 */
 
+// Hàm mã hóa DES
 QString Cipher::desEncrypt(const QString &plaintext, const QString &key) {
     gcry_cipher_hd_t handle;
     gcry_error_t err;
@@ -750,6 +743,7 @@ QString Cipher::desEncrypt(const QString &plaintext, const QString &key) {
     return QString(cipherBytes.toHex());
 }
 
+// Hàm giải mã DES
 QString Cipher::desDecrypt(const QString &ciphertext, const QString &key) {
     gcry_cipher_hd_t handle;
     gcry_error_t err;
@@ -792,11 +786,12 @@ QString Cipher::desDecrypt(const QString &ciphertext, const QString &key) {
 }
 
 /*
-******************************************
- * Mã hóa và giải mã AES
-******************************************
+* ****************************************
+* Mã hóa và giải mã AES
+* ****************************************
 */
 
+// Hàm mã hóa AES
 QString Cipher::aesEncrypt(const QString &plaintext, const QString &key) {
     gcry_cipher_hd_t handle;
     QByteArray keyBytes = key.toUtf8();
@@ -833,6 +828,7 @@ QString Cipher::aesEncrypt(const QString &plaintext, const QString &key) {
     return QString(cipherBytes.toHex());
 }
 
+// Hàm giải mã AES
 QString Cipher::aesDecrypt(const QString &ciphertext, const QString &key) {
     gcry_cipher_hd_t handle;
     QByteArray keyBytes = key.toUtf8();
@@ -875,24 +871,26 @@ QString Cipher::aesDecrypt(const QString &ciphertext, const QString &key) {
 
 /*
 -------------------------------------------------------------------------------------------------------
-*******************************************************************************************************
+* *****************************************************************************************************
 * Mã hóa và giải mã Page Import
-*******************************************************************************************************
+* *****************************************************************************************************
 -------------------------------------------------------------------------------------------------------
 */
 
 /*
-****************************************************
+* **************************************************
 * Mã hóa và Giải mã DES
-****************************************************
+* **************************************************
 */
 
+// Hàm sinh khóa DES
 QByteArray Cipher::generateDESKey() {
     QByteArray key(8, 0);
     gcry_randomize(key.data(), key.size(), GCRY_STRONG_RANDOM);
     return key;
 }
 
+// Hàm kiểm tra khóa DES
 QByteArray Cipher::checkDESKey() {
     QString keyFilePath = QCoreApplication::applicationDirPath() + "/DES_key.txt";
     QByteArray key;
@@ -905,6 +903,7 @@ QByteArray Cipher::checkDESKey() {
     return key;
 }
 
+// Hàm mã hóa DES
 QByteArray Cipher::encryptDES(const QByteArray &data) {
     gcry_cipher_hd_t handle;
     QByteArray key = checkDESKey();
@@ -940,6 +939,7 @@ QByteArray Cipher::encryptDES(const QByteArray &data) {
     return cipherBytes;
 }
 
+// Hàm giải mã DES
 QByteArray Cipher::decryptDES(const QByteArray &data) {
     gcry_cipher_hd_t handle;
     QByteArray key = checkDESKey();
@@ -980,43 +980,19 @@ QByteArray Cipher::decryptDES(const QByteArray &data) {
 }
 
 /*
-****************************************************
+* **************************************************
 * Mã hóa và Giải mã AES
-****************************************************
+* **************************************************
 */
 
+// Hàm sinh khóa AES
 QByteArray Cipher::generateAESKey() {
     QByteArray key(16, 0);
     gcry_randomize(key.data(), key.size(), GCRY_STRONG_RANDOM);
     return key;
 }
 
-bool Cipher::saveKeyToFile(const QString &filePath, const QByteArray &key) {
-    QFile file(filePath);
-    if (!file.open(QIODevice::WriteOnly | QIODevice::Text)) {
-        qDebug() << "Failed to open file for writing";
-        return false;
-    }
-
-    QTextStream out(&file);
-    out << key.toHex();
-    file.close();
-    return true;
-}
-
-QByteArray Cipher::loadKeyFromFile(const QString &filePath) {
-    QFile file(filePath);
-    if (!file.open(QIODevice::ReadOnly | QIODevice::Text)) {
-        qDebug() << "Failed to open file for reading";
-        return QByteArray();
-    }
-
-    QTextStream in(&file);
-    QString keyHex = in.readAll();
-    file.close();
-    return QByteArray::fromHex(keyHex.toUtf8());
-}
-
+// Hàm kiểm tra khóa AES
 QByteArray Cipher::checkAESKey() {
     QString keyFilePath = QCoreApplication::applicationDirPath() + "/AES_key.txt";
     QByteArray key;
@@ -1029,6 +1005,7 @@ QByteArray Cipher::checkAESKey() {
     return key;
 }
 
+// Hàm mã hóa AES
 QByteArray Cipher::encryptAES(const QByteArray &data) {
     gcry_cipher_hd_t handle;
     QByteArray key = checkAESKey();
@@ -1070,6 +1047,7 @@ QByteArray Cipher::encryptAES(const QByteArray &data) {
     return iv + cipherBytes;
 }
 
+// Hàm giải mã AES
 QByteArray Cipher::decryptAES(const QByteArray &data) {
     if (data.size() < 16) {
         qDebug() << "Invalid data size";
@@ -1117,4 +1095,36 @@ QByteArray Cipher::decryptAES(const QByteArray &data) {
     plainBytes.chop(padding);
 
     return plainBytes;
+}
+
+/*
+* **************************************************
+* Lưu và đọc file
+* **************************************************
+*/
+
+// Hàm lưu file
+void Cipher::saveKeyToFile(const QString &filePath, const QByteArray &key) {
+    QFile file(filePath);
+    if (!file.open(QIODevice::WriteOnly | QIODevice::Text)) {
+        qDebug() << "Failed to open file for writing";
+    }
+
+    QTextStream out(&file);
+    out << key.toHex();
+    file.close();
+}
+
+// Hàm đọc file
+QByteArray Cipher::loadKeyFromFile(const QString &filePath) {
+    QFile file(filePath);
+    if (!file.open(QIODevice::ReadOnly | QIODevice::Text)) {
+        qDebug() << "Failed to open file for reading";
+        return QByteArray();
+    }
+
+    QTextStream in(&file);
+    QString keyHex = in.readAll();
+    file.close();
+    return QByteArray::fromHex(keyHex.toUtf8());
 }
