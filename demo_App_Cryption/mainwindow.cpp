@@ -46,10 +46,6 @@ MainWindow::~MainWindow() {
     delete ui;
 }
 
-QString byteArrayToString(const QByteArray &byteArray) {
-    return QString::fromUtf8(byteArray);
-}
-
 void MainWindow::showImportOptions()
 {
     ui->stackedWidget->setCurrentWidget(ui->pageImport);
