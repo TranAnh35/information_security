@@ -1,7 +1,9 @@
 #ifndef MAINWINDOW_H
 #define MAINWINDOW_H
 
+#include <QUrl>
 #include <QFile>
+#include <QMimeData>
 #include <QString>
 #include <QMainWindow>
 #include <QTextStream>
@@ -9,6 +11,9 @@
 #include <qnamespace.h>
 #include <QRandomGenerator>
 #include <QRegularExpression>
+#include <QDragEnterEvent>
+#include <QTextStream>
+#include <QFileDialog>
 
 #include "Cipher.h"
 
@@ -26,7 +31,6 @@ public:
 private slots:
     void on_encryptButton_clicked();
     void on_decryptButton_clicked();
-    void on_browseButton_clicked();
     void on_reScanButton_clicked();
     void on_saveEncryptedButton_clicked();
     void on_saveDecryptedButton_clicked();
@@ -39,9 +43,23 @@ private slots:
     void set_Affine_Form(bool status);
     void set_Hill_Form(bool status);
 
+    void on_browseFileTxtButton_clicked();
+    void on_file_browseButton_clicked();
+
 private:
     Ui::MainWindow *ui;
     Cipher cipher;
+
+    void showImportOptions();
+    void showTextEntry();
+    void showFileOptions();
+    void browseFile();
+
+    void importEncryptFile();
+    void importDecryptFile();
+    void startProcess();
+    void backToHome();
+    void backToImport();
 
     QString readFile(const QString &fileName);
     void writeFile(const QString &fileName, const QString &text);
@@ -53,6 +71,11 @@ private:
     
     QString getExecutablePath();
     QString currentFilePath;
+
+protected:
+    void dragEnterEvent(QDragEnterEvent *event) override;
+    void dropEvent(QDropEvent *event) override;
+
 };
 
 #endif // MAINWINDOW_H

@@ -6,6 +6,28 @@ MainWindow::MainWindow(QWidget *parent)
     , ui(new Ui::MainWindow)
 {
     ui->setupUi(this);
+
+    setAcceptDrops(true);
+
+    connect(ui->importFileButton, &QPushButton::clicked, this, &MainWindow::showImportOptions);
+    connect(ui->enterTextButton, &QPushButton::clicked, this, &MainWindow::showTextEntry);
+    connect(ui->importEncryptButton, &QPushButton::clicked, this, &MainWindow::showFileOptions);
+    connect(ui->importDecryptButton, &QPushButton::clicked, this, &MainWindow::showFileOptions);
+    connect(ui->importEncryptButton, &QPushButton::clicked, this, &MainWindow::importEncryptFile);
+    connect(ui->importDecryptButton, &QPushButton::clicked, this, &MainWindow::importDecryptFile);
+    connect(ui->startButton, &QPushButton::clicked, this, &MainWindow::startProcess);
+    connect(ui->text_backHomeButton, &QPushButton::clicked, this, &MainWindow::backToHome);
+    connect(ui->import_backHomeButton, &QPushButton::clicked, this, &MainWindow::backToHome);
+    connect(ui->file_backImportButton, &QPushButton::clicked, this, &MainWindow::backToImport);
+
+    QVector<QString> items = {"Caesar Cipher", "Substitution Cipher", "Affine Cipher", "Vigenère Cipher",
+                              "Hill Cipher", "Permutation Cipher", "Playfair Cipher", "Rail Fence Cipher",
+                              "DES Cipher", "AES Cipher"};
+
+    for(const auto& item : items){
+        ui->encryptionTypeComboBox->addItem(item);
+    }
+
     ui->encryptedTextEdit->setReadOnly(true);
     ui->decryptedTextEdit->setReadOnly(true);
     ui->saveEncryptedButton->setVisible(false);
@@ -16,18 +38,156 @@ MainWindow::MainWindow(QWidget *parent)
     connect(ui->encryptedTextEdit, &QTextEdit::textChanged, this, &MainWindow::checkTextEdits);
     connect(ui->decryptedTextEdit, &QTextEdit::textChanged, this, &MainWindow::checkTextEdits);
 
-    QVector<QString> items = {"Caesar Cipher", "Substitution Cipher", "Affine Cipher", "Vigenère Cipher",
-                              "Hill Cipher", "Permutation Cipher", "Playfair Cipher", "Rail Fence Cipher",
-                              "DES Cipher", "AES Cipher"};
-
-    for(const auto& item : items){
-        ui->encryptionTypeComboBox->addItem(item);
-    }
-
+    ui->algorithmComboBox->addItem("DES Cipher");
+    ui->algorithmComboBox->addItem("AES Cipher");
 }
 
 MainWindow::~MainWindow() {
     delete ui;
+}
+
+QString byteArrayToString(const QByteArray &byteArray) {
+    return QString::fromUtf8(byteArray);
+}
+
+void MainWindow::showImportOptions()
+{
+    ui->stackedWidget->setCurrentWidget(ui->pageImport);
+}
+
+void MainWindow::showTextEntry()
+{
+    ui->stackedWidget->setCurrentWidget(ui->pageText);
+}
+
+void MainWindow::showFileOptions()
+{
+    ui->stackedWidget->setCurrentWidget(ui->pageFile);
+}
+
+void MainWindow::browseFile()
+{
+    QString filePath = QFileDialog::getOpenFileName(this, tr("Open File"), "", tr("All Files (*)"));
+    if (!filePath.isEmpty()) {
+        ui->inputPathLineEdit->setText(filePath);
+        ui->stackedWidget->setCurrentWidget(ui->pageFile);
+    }
+}
+
+void MainWindow::on_file_browseButton_clicked() {
+    QString filePath = QFileDialog::getSaveFileName(this, tr("Save File"), "", tr("All Files (*)"));
+    if (!filePath.isEmpty()) {
+        QString mode = ui->startButton->property("mode").toString();
+        QFileInfo fileInfo(ui->inputPathLineEdit->text());
+        QString inputSuffix = "." + fileInfo.suffix();
+
+        if (mode == "encrypt") {
+            ui->outputPathLineEdit->setText(filePath + inputSuffix + ".dat");
+        } else if (mode == "decrypt") {
+            if (filePath.endsWith(".dat")) {
+                filePath.chop(4); // Remove ".dat"
+            }
+            ui->outputPathLineEdit->setText(filePath + inputSuffix);
+        }
+    }
+}
+
+void MainWindow::importEncryptFile()
+{
+    browseFile();
+    QString inputFilePath = ui->inputPathLineEdit->text();
+    ui->outputPathLineEdit->setText(inputFilePath + ".dat");
+    ui->startButton->setProperty("mode", "encrypt");
+}
+
+void MainWindow::importDecryptFile()
+{
+    QString filePath = QFileDialog::getOpenFileName(this, tr("Open File"), "", tr("Data Files (*.dat)"));
+    if (!filePath.isEmpty()) {
+        ui->inputPathLineEdit->setText(filePath);
+        QString outputFilePath = filePath;
+        outputFilePath.chop(4);
+        ui->outputPathLineEdit->setText(outputFilePath);
+        ui->startButton->setProperty("mode", "decrypt");
+    }
+}
+
+void MainWindow::backToHome()
+{
+    ui->stackedWidget->setCurrentWidget(ui->pageHome);
+}
+
+void MainWindow::backToImport()
+{
+    ui->stackedWidget->setCurrentWidget(ui->pageImport);
+}
+
+void MainWindow::startProcess()
+{
+    QString inputFilePath = ui->inputPathLineEdit->text();
+    QString outputFilePath = ui->outputPathLineEdit->text();
+    QString mode = ui->startButton->property("mode").toString();
+    QString algorithm = ui->algorithmComboBox->currentText();
+
+    QFile inputFile(inputFilePath);
+    if (inputFile.open(QIODevice::ReadOnly)) {
+        QByteArray fileContent = inputFile.readAll();
+        inputFile.close();
+
+        QByteArray processedContent;
+
+        if (algorithm == "AES Cipher") {
+            if (mode == "encrypt") {
+                processedContent = Cipher::encryptAES(fileContent);
+            } else if (mode == "decrypt") {
+                processedContent = Cipher::decryptAES(fileContent);
+            }
+        } else if (algorithm == "DES Cipher") {
+            if (mode == "encrypt") {
+                processedContent = Cipher::encryptDES(fileContent);
+            } else if (mode == "decrypt") {
+                processedContent = Cipher::decryptDES(fileContent);
+            }
+        }
+
+        if (!processedContent.isEmpty()) {
+            QFile outputFile(outputFilePath);
+            if (outputFile.open(QIODevice::WriteOnly)) {
+                outputFile.write(processedContent);
+                outputFile.close();
+                QMessageBox::information(this, tr("Success"), tr("Process completed successfully."));
+            } else {
+                QMessageBox::warning(this, tr("Error"), tr("Failed to open output file."));
+            }
+        } else {
+            QMessageBox::warning(this, tr("Error"), tr("Failed to process content."));
+        }
+
+        ui->stackedWidget->setCurrentWidget(ui->pageImport);
+    } else {
+        QMessageBox::warning(this, tr("Error"), tr("Failed to open input file."));
+    }
+}
+
+void MainWindow::dragEnterEvent(QDragEnterEvent *event)
+{
+    if (event->mimeData()->hasUrls()) {
+        event->acceptProposedAction();
+    }
+}
+
+void MainWindow::dropEvent(QDropEvent *event)
+{
+    foreach (const QUrl &url, event->mimeData()->urls()) {
+        QString filePath = url.toLocalFile();
+        QFile file(filePath);
+        if (file.open(QIODevice::ReadOnly | QIODevice::Text)) {
+            QTextStream in(&file);
+            QString fileContent = in.readAll();
+            ui->inputTextEdit->setPlainText(fileContent);
+            file.close();
+        }
+    }
 }
 
 /*
@@ -219,7 +379,7 @@ void MainWindow::on_decryptButton_clicked() {
 }
 
 // Hàm mở file
-void MainWindow::on_browseButton_clicked() {
+void MainWindow::on_browseFileTxtButton_clicked() {
     QString fileName = QFileDialog::getOpenFileName(this, "Open Text File", "", "Text Files (*.txt)");
     if (!fileName.isEmpty()) {
         QString text = readFile(fileName);

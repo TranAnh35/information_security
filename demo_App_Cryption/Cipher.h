@@ -61,6 +61,20 @@ public:
     // AES Cipher
     QString aesEncrypt(const QString &plaintext, const QString &key);
     QString aesDecrypt(const QString &ciphertext, const QString &key);
+
+    // Hàm mã hóa nhiều loại file
+    static QByteArray encryptAES(const QByteArray &data);
+    static QByteArray decryptAES(const QByteArray &data);
+    static QByteArray encryptDES(const QByteArray &data);
+    static QByteArray decryptDES(const QByteArray &data);
+
+private:
+    static QByteArray checkDESKey();
+    static QByteArray checkAESKey();
+    static QByteArray generateAESKey();
+    static QByteArray generateDESKey();
+    static bool saveKeyToFile(const QString &filePath, const QByteArray &key);
+    static QByteArray loadKeyFromFile(const QString &filePath);
 };
 
 #endif // CIPHER_H

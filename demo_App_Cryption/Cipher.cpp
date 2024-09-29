@@ -1,6 +1,14 @@
 #include "Cipher.h"
 
 /*
+-------------------------------------------------------------------------------------------------------
+*******************************************************************************************************
+* Mã hóa và giải mã Page Text
+*******************************************************************************************************
+-------------------------------------------------------------------------------------------------------
+*/
+
+/*
 ******************************************
 Mã hóa và giải mã Caesar
 ******************************************
@@ -750,12 +758,10 @@ QString Cipher::desDecrypt(const QString &ciphertext, const QString &key) {
     QByteArray cipherBytes = QByteArray::fromHex(ciphertext.toUtf8());
     QByteArray plainBytes(cipherBytes.size(), 0);
 
-    // Ensure the key is 8 bytes long
     if (keyBytes.size() < 8) {
         keyBytes.resize(8, '0');
     }
 
-    // Open cipher
     err = gcry_cipher_open(&handle, GCRY_CIPHER_DES, GCRY_CIPHER_MODE_ECB, 0);
     if (err) {
         return QString("Decryption Error: %1").arg(gcry_strerror(err));
@@ -777,7 +783,6 @@ QString Cipher::desDecrypt(const QString &ciphertext, const QString &key) {
 
     gcry_cipher_close(handle);
 
-    // Remove PKCS7 padding
     int paddingSize = static_cast<int>(plainBytes[plainBytes.size() - 1]);
     if (paddingSize > 0 && paddingSize <= 8) {
         plainBytes.chop(paddingSize);
@@ -797,31 +802,26 @@ QString Cipher::aesEncrypt(const QString &plaintext, const QString &key) {
     QByteArray keyBytes = key.toUtf8();
     QByteArray plainBytes = plaintext.toUtf8();
 
-    // Ensure the key is 16 bytes long (128-bit AES)
     if (keyBytes.size() < 16) {
-        keyBytes.resize(16, '0');  // Padding key if it's too short
+        keyBytes.resize(16, '0');
     }
 
-    // Padding the plaintext to be a multiple of AES block size (16 bytes)
     int padding = 16 - (plainBytes.size() % 16);
-    plainBytes.append(padding, static_cast<char>(padding));  // PKCS#7 padding
+    plainBytes.append(padding, static_cast<char>(padding));
 
-    QByteArray cipherBytes(plainBytes.size(), 0);  // Allocate the correct buffer size
+    QByteArray cipherBytes(plainBytes.size(), 0);
 
-    // Open cipher
     if (gcry_cipher_open(&handle, GCRY_CIPHER_AES128, GCRY_CIPHER_MODE_ECB, 0) != 0) {
         qDebug() << "Failed to open cipher";
         return QString();
     }
 
-    // Set key
     if (gcry_cipher_setkey(handle, keyBytes.data(), keyBytes.size()) != 0) {
         qDebug() << "Failed to set key";
         gcry_cipher_close(handle);
         return QString();
     }
 
-    // Encrypt the plaintext
     if (gcry_cipher_encrypt(handle, cipherBytes.data(), cipherBytes.size(), plainBytes.data(), plainBytes.size()) != 0) {
         qDebug() << "Failed to encrypt";
         gcry_cipher_close(handle);
@@ -833,32 +833,27 @@ QString Cipher::aesEncrypt(const QString &plaintext, const QString &key) {
     return QString(cipherBytes.toHex());
 }
 
-// AES Decryption
 QString Cipher::aesDecrypt(const QString &ciphertext, const QString &key) {
     gcry_cipher_hd_t handle;
     QByteArray keyBytes = key.toUtf8();
     QByteArray cipherBytes = QByteArray::fromHex(ciphertext.toUtf8());
     QByteArray plainBytes(cipherBytes.size(), 0);
 
-    // Ensure the key is 16 bytes long (128-bit AES)
     if (keyBytes.size() < 16) {
-        keyBytes.resize(16, '0');  // Padding key if it's too short
+        keyBytes.resize(16, '0');
     }
 
-    // Open cipher
     if (gcry_cipher_open(&handle, GCRY_CIPHER_AES128, GCRY_CIPHER_MODE_ECB, 0) != 0) {
         qDebug() << "Failed to open cipher";
         return QString();
     }
 
-    // Set key
     if (gcry_cipher_setkey(handle, keyBytes.data(), keyBytes.size()) != 0) {
         qDebug() << "Failed to set key";
         gcry_cipher_close(handle);
         return QString();
     }
 
-    // Decrypt the ciphertext
     if (gcry_cipher_decrypt(handle, plainBytes.data(), plainBytes.size(), cipherBytes.data(), cipherBytes.size()) != 0) {
         qDebug() << "Failed to decrypt";
         gcry_cipher_close(handle);
@@ -867,14 +862,259 @@ QString Cipher::aesDecrypt(const QString &ciphertext, const QString &key) {
 
     gcry_cipher_close(handle);
 
-    // Remove PKCS#7 padding
-    int padding = static_cast<int>(plainBytes[plainBytes.size() - 1]);  // Get padding value
+    int padding = static_cast<int>(plainBytes[plainBytes.size() - 1]);
     if (padding > 0 && padding <= 16) {
-        plainBytes.chop(padding);  // Remove the padding
+        plainBytes.chop(padding);
     } else {
         qDebug() << "Invalid padding";
         return QString();
     }
 
     return QString::fromUtf8(plainBytes);
+}
+
+/*
+-------------------------------------------------------------------------------------------------------
+*******************************************************************************************************
+* Mã hóa và giải mã Page Import
+*******************************************************************************************************
+-------------------------------------------------------------------------------------------------------
+*/
+
+/*
+****************************************************
+* Mã hóa và Giải mã DES
+****************************************************
+*/
+
+QByteArray Cipher::generateDESKey() {
+    QByteArray key(8, 0);
+    gcry_randomize(key.data(), key.size(), GCRY_STRONG_RANDOM);
+    return key;
+}
+
+QByteArray Cipher::checkDESKey() {
+    QString keyFilePath = QCoreApplication::applicationDirPath() + "/DES_key.txt";
+    QByteArray key;
+    if (QFile::exists(keyFilePath)) {
+        key = loadKeyFromFile(keyFilePath);
+    } else {
+        key = generateDESKey();
+        saveKeyToFile(keyFilePath, key);
+    }
+    return key;
+}
+
+QByteArray Cipher::encryptDES(const QByteArray &data) {
+    gcry_cipher_hd_t handle;
+    QByteArray key = checkDESKey();
+
+    if (key.size() < 8) {
+        key.resize(8, '0');
+    }
+
+    int padding = 8 - (data.size() % 8);
+    QByteArray paddedData = data;
+    paddedData.append(padding, static_cast<char>(padding));
+
+    QByteArray cipherBytes(paddedData.size(), 0);
+
+    if (gcry_cipher_open(&handle, GCRY_CIPHER_DES, GCRY_CIPHER_MODE_ECB, 0) != 0) {
+        qDebug() << "Failed to open DES cipher in ECB mode";
+        return QByteArray();
+    }
+
+    if (gcry_cipher_setkey(handle, key.data(), key.size()) != 0) {
+        qDebug() << "Failed to set DES key";
+        gcry_cipher_close(handle);
+        return QByteArray();
+    }
+
+    if (gcry_cipher_encrypt(handle, cipherBytes.data(), cipherBytes.size(), paddedData.data(), paddedData.size()) != 0) {
+        qDebug() << "Failed to encrypt data using DES";
+        gcry_cipher_close(handle);
+        return QByteArray();
+    }
+
+    gcry_cipher_close(handle);
+    return cipherBytes;
+}
+
+QByteArray Cipher::decryptDES(const QByteArray &data) {
+    gcry_cipher_hd_t handle;
+    QByteArray key = checkDESKey();
+
+    if (key.size() < 8) {
+        key.resize(8, '0');
+    }
+
+    QByteArray plainBytes(data.size(), 0);
+
+    if (gcry_cipher_open(&handle, GCRY_CIPHER_DES, GCRY_CIPHER_MODE_ECB, 0) != 0) {
+        qDebug() << "Failed to open DES cipher in ECB mode";
+        return QByteArray();
+    }
+
+    if (gcry_cipher_setkey(handle, key.data(), key.size()) != 0) {
+        qDebug() << "Failed to set DES key";
+        gcry_cipher_close(handle);
+        return QByteArray();
+    }
+
+    if (gcry_cipher_decrypt(handle, plainBytes.data(), plainBytes.size(), data.data(), data.size()) != 0) {
+        qDebug() << "Failed to decrypt data using DES";
+        gcry_cipher_close(handle);
+        return QByteArray();
+    }
+
+    gcry_cipher_close(handle);
+
+    int padding = static_cast<int>(plainBytes.at(plainBytes.size() - 1));
+    if (padding < 1 || padding > 8) {
+        qDebug() << "Invalid padding value:" << padding;
+        return QByteArray();
+    }
+    plainBytes.chop(padding);
+
+    return plainBytes;
+}
+
+/*
+****************************************************
+* Mã hóa và Giải mã AES
+****************************************************
+*/
+
+QByteArray Cipher::generateAESKey() {
+    QByteArray key(16, 0);
+    gcry_randomize(key.data(), key.size(), GCRY_STRONG_RANDOM);
+    return key;
+}
+
+bool Cipher::saveKeyToFile(const QString &filePath, const QByteArray &key) {
+    QFile file(filePath);
+    if (!file.open(QIODevice::WriteOnly | QIODevice::Text)) {
+        qDebug() << "Failed to open file for writing";
+        return false;
+    }
+
+    QTextStream out(&file);
+    out << key.toHex();
+    file.close();
+    return true;
+}
+
+QByteArray Cipher::loadKeyFromFile(const QString &filePath) {
+    QFile file(filePath);
+    if (!file.open(QIODevice::ReadOnly | QIODevice::Text)) {
+        qDebug() << "Failed to open file for reading";
+        return QByteArray();
+    }
+
+    QTextStream in(&file);
+    QString keyHex = in.readAll();
+    file.close();
+    return QByteArray::fromHex(keyHex.toUtf8());
+}
+
+QByteArray Cipher::checkAESKey() {
+    QString keyFilePath = QCoreApplication::applicationDirPath() + "/AES_key.txt";
+    QByteArray key;
+    if (QFile::exists(keyFilePath)) {
+        key = loadKeyFromFile(keyFilePath);
+    } else {
+        key = generateAESKey();
+        saveKeyToFile(keyFilePath, key);
+    }
+    return key;
+}
+
+QByteArray Cipher::encryptAES(const QByteArray &data) {
+    gcry_cipher_hd_t handle;
+    QByteArray key = checkAESKey();
+    QByteArray iv(16, 0);
+
+    gcry_randomize(iv.data(), iv.size(), GCRY_STRONG_RANDOM);
+
+    QByteArray paddedData = data;
+    int padding = 16 - (data.size() % 16);
+    paddedData.append(padding, static_cast<char>(padding));
+
+    QByteArray cipherBytes(paddedData.size(), 0);
+
+    if (gcry_cipher_open(&handle, GCRY_CIPHER_AES128, GCRY_CIPHER_MODE_CBC, 0) != 0) {
+        qDebug() << "Failed to open cipher";
+        return QByteArray();
+    }
+
+    if (gcry_cipher_setkey(handle, key.data(), key.size()) != 0) {
+        qDebug() << "Failed to set key";
+        gcry_cipher_close(handle);
+        return QByteArray();
+    }
+
+    if (gcry_cipher_setiv(handle, iv.data(), iv.size()) != 0) {
+        qDebug() << "Failed to set IV";
+        gcry_cipher_close(handle);
+        return QByteArray();
+    }
+
+    if (gcry_cipher_encrypt(handle, cipherBytes.data(), cipherBytes.size(), paddedData.data(), paddedData.size()) != 0) {
+        qDebug() << "Failed to encrypt";
+        gcry_cipher_close(handle);
+        return QByteArray();
+    }
+
+    gcry_cipher_close(handle);
+
+    return iv + cipherBytes;
+}
+
+QByteArray Cipher::decryptAES(const QByteArray &data) {
+    if (data.size() < 16) {
+        qDebug() << "Invalid data size";
+        return QByteArray();
+    }
+
+    gcry_cipher_hd_t handle;
+    QByteArray key = checkAESKey();
+    QByteArray iv = data.left(16);
+    QByteArray cipherBytes = data.mid(16);
+
+    QByteArray plainBytes(cipherBytes.size(), 0);
+
+    if (gcry_cipher_open(&handle, GCRY_CIPHER_AES128, GCRY_CIPHER_MODE_CBC, 0) != 0) {
+        qDebug() << "Failed to open cipher";
+        return QByteArray();
+    }
+
+    if (gcry_cipher_setkey(handle, key.data(), key.size()) != 0) {
+        qDebug() << "Failed to set key";
+        gcry_cipher_close(handle);
+        return QByteArray();
+    }
+
+    if (gcry_cipher_setiv(handle, iv.data(), iv.size()) != 0) {
+        qDebug() << "Failed to set IV";
+        gcry_cipher_close(handle);
+        return QByteArray();
+    }
+
+    if (gcry_cipher_decrypt(handle, plainBytes.data(), plainBytes.size(), cipherBytes.data(), cipherBytes.size()) != 0) {
+        qDebug() << "Failed to decrypt";
+        gcry_cipher_close(handle);
+        return QByteArray();
+    }
+
+    gcry_cipher_close(handle);
+
+    // Remove PKCS#7 padding
+    int padding = static_cast<int>(plainBytes.at(plainBytes.size() - 1));
+    if (padding < 1 || padding > 16) {
+        qDebug() << "Invalid padding";
+        return QByteArray();
+    }
+    plainBytes.chop(padding);
+
+    return plainBytes;
 }
